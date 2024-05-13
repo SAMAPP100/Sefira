@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sefiras haomer</title>
+  </head>
+  <body>
+    <div id="main">
+      <p id="nacht"></p>
+      <p style="font-size: 50px">
+        : בָּרוּךְ אַתָּה יְיָ אֱלֹהֵֽינוּ מֶֽלֶךְ הָעוֹלָם אֲשֶׁר קִדְּשָֽׁנוּ
+        בְּמִצְוֹתָיו וְצִוָּֽנוּ עַל סְפִירַת הָעֹֽמֶר
+      </p>
+      <p class="sefira"></p>
+      <p>
+        הָרַחֲמָן הוּא יַחֲזִיר לָנוּ עֲבוֹדַת בֵּית הַמִּקְדָּשׁ לִמְקוֹמָה,
+        בִּמְהֵרָה בְּיָמֵֽינוּ. אָמֵן סֶֽלָה
+      </p>
+    </div>
+    <style>
+      .sefira {
+        font-size: 100px;
+      }
+
+      body {
+        text-align: center;
+        background-color: blue;
+        color: white;
+      }
+    </style>
+    <script src="./JS/ZMANIM.js"></script>
+    <script src="./JS/luxon.js"></script>
+    <script src="./JS/Sefira.js"></script>
+    <script>
+      const DateTime = luxon.DateTime;
+      const nachtEle = document.getElementById("nacht");
+      const sefiraEle = document.querySelector(".sefira");
+      const myLocation = new KosherZmanim.GeoLocation(
+        "America/New_York",
+        40.63232,
+        -73.9835904,
+        "America/New_York"
+      );
+
+      const jsonOptions = {
+        date: new Date(),
+        timeZoneId: "America/New_York",
+        locationName: "America/New_York",
+        latitude: 40.63232,
+        longitude: -73.9835904,
+      };
+
+      let zmanim = new KosherZmanim.ZmanimCalendar(myLocation);
+      let zmanimJson = KosherZmanim.getZmanimJson(jsonOptions);
+      let calendar = new KosherZmanim.JewishCalendar();
+      let nacht = DateTime.fromJSDate(new Date(zmanimJson.BasicZmanim.Tzais72));
+      let omer = isAfterNacht()
+        ? calendar.getDayOfOmer() + 1
+        : calendar.getDayOfOmer();
+      console.log(isAfterNacht());
+      //   nacht.setZone('EST')
+
+      function setHTML() {
+        nachtEle.innerHTML = `Nacht is ${nacht.toJSDate()} and today is the ${omer}th of the omer
+        <br/>
+        `;
+        sefiraEle.innerHTML = `${sefira[omer]}`;
+      }
+      setHTML();
+      setInterval(() => {
+        if (isAfterNacht()) {
+          let now = new Date();
+          now.setDate(now.getDate() + 1);
+          zmanimJson = KosherZmanim.getZmanimJson({
+            ...jsonOptions,
+            date: now,
+          });
+          calendar = new KosherZmanim.JewishCalendar(
+            new Date(zmanimJson.BasicZmanim.Tzais72)
+          );
+          omer = calendar.getDayOfOmer();
+          nacht = DateTime.fromJSDate(new Date(zmanimJson.BasicZmanim.Tzais72));
+          setHTML();
+        }
+      }, 10000);
+
+      function isAfterNacht() {
+        const now = new Date();
+        const n = nacht.setZone("EST");
+        const interval = n.until(now);
+        return interval?.invalid?.explanation === undefined ? true : false;
+      }
+    </script>
+  </body>
+</html>
